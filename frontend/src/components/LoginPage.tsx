@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 interface LoginPageProps {
-  onLogin: () => void;
+  onLogin: (username: string) => void;
 }
 
 export const LoginPage = ({ onLogin }: LoginPageProps) => {
@@ -25,8 +25,8 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
       });
 
       if (res.ok) {
-        localStorage.setItem("pm_session", "1");
-        onLogin();
+        localStorage.setItem("pm_session", username);
+        onLogin(username);
       } else {
         setError("Invalid username or password.");
       }
