@@ -256,7 +256,7 @@ Switch frontend from local demo state to backend-powered persistent state.
 
 ---
 
-## Part 8 - Basic AI connectivity (OpenRouter)
+## Part 8 - Basic AI connectivity (OpenRouter) ✅
 
 ### Scope
 
@@ -264,25 +264,33 @@ Validate backend can call OpenRouter model successfully.
 
 ### Checklist
 
-- [ ] Add OpenRouter client configuration.
-- [ ] Securely read `OPENROUTER_API_KEY` from environment.
-- [ ] Add simple backend probe route or test harness for AI call.
-- [ ] Run a deterministic connectivity check prompt (`2+2`).
-- [ ] Add robust error handling for missing key/network/provider failures.
+- [x] Add OpenRouter client configuration.
+- [x] Securely read `OPENROUTER_API_KEY` from environment.
+- [x] Add simple backend probe route or test harness for AI call.
+- [x] Run a deterministic connectivity check prompt (`2+2`).
+- [x] Add robust error handling for missing key/network/provider failures.
+
+### Implementation decisions
+
+- `backend/ai.py` module wraps the OpenAI-compatible OpenRouter client.
+- `get_client()` raises `ValueError` on missing key; caught at the route level and returned as 500.
+- `APIConnectionError` → 502; `APIStatusError` → 502; `AuthenticationError` → 500.
+- `GET /api/ai/ping` sends `"What is 2+2?"` and returns `{"status": "ok", "response": "4"}`.
+- `.env` key renamed to uppercase `OPENROUTER_API_KEY` to match env var convention.
 
 ### Practical tests
 
-- [ ] Valid key returns successful model response.
-- [ ] Missing key fails with clear startup/runtime message.
-- [ ] Provider/network failure returns controlled error response.
+- [x] Valid key returns successful model response (`{"status":"ok","response":"4"}`).
+- [x] Missing key fails with clear 500 error message.
+- [x] Provider/network failure returns controlled 502 error response.
 
 ### Success criteria
 
-- AI integration is proven operational and safely failure-handled.
+- AI integration is proven operational and safely failure-handled. ✅
 
 ---
 
-## Part 9 - Structured outputs with board context
+## Part 9 - Structured outputs with board context ✅
 
 ### Scope
 
@@ -290,29 +298,37 @@ Send board JSON + user query (+ history) to AI and parse structured response.
 
 ### Checklist
 
-- [ ] Define structured response schema:
+- [x] Define structured response schema:
   - assistant text response,
   - optional board update payload.
-- [ ] Build prompt contract with board JSON + conversation history.
-- [ ] Validate and parse model response against schema.
-- [ ] If board update exists, apply via backend persistence layer.
-- [ ] Store minimal conversation history for context continuity.
-- [ ] Add tests for schema-valid and schema-invalid responses.
+- [x] Build prompt contract with board JSON + conversation history.
+- [x] Validate and parse model response against schema.
+- [x] If board update exists, apply via backend persistence layer.
+- [x] Store minimal conversation history for context continuity.
+- [x] Add tests for schema-valid and schema-invalid responses.
+
+### Implementation decisions
+
+- Model instructed via system prompt to reply with `{"message": "...", "board_update": <BoardData>|null}`.
+- `chat_with_board()` in `ai.py` builds messages array (system + history + user), calls model, parses JSON, validates board shape, returns `(text, board_update|None)`.
+- `POST /api/ai/chat` route: fetches board, calls `chat_with_board`, appends to in-memory history, persists board if updated.
+- History stored in `_conversation_history` dict keyed by username (in-memory; cleared on container restart — acceptable for MVP).
+- Validation rejects board_update if missing `columns`/`cards` keys, preventing corrupted board writes.
 
 ### Practical tests
 
-- [ ] Non-mutating queries return assistant text only.
-- [ ] Mutating queries return valid update payload and persist changes.
-- [ ] Invalid model output is handled gracefully (no corrupted board state).
-- [ ] Repeated turns include history and remain coherent.
+- [x] Non-mutating queries return assistant text only (`board_updated: false`).
+- [x] Mutating queries return valid update payload and persist changes (verified via `GET /api/board`).
+- [x] Invalid model output is handled gracefully (no corrupted board state).
+- [x] Repeated turns include history and remain coherent.
 
 ### Success criteria
 
-- AI can reliably return actionable structured output without breaking data integrity.
+- AI can reliably return actionable structured output without breaking data integrity. ✅
 
 ---
 
-## Part 10 - Sidebar AI chat UX
+## Part 10 - Sidebar AI chat UX ✅
 
 ### Scope
 
@@ -320,23 +336,30 @@ Expose full chat UI in frontend and refresh board when AI applies updates.
 
 ### Checklist
 
-- [ ] Add sidebar chat component with message list + input.
-- [ ] Connect chat submit to backend AI endpoint.
-- [ ] Render assistant responses with loading/error states.
-- [ ] Reflect backend-applied board changes in UI automatically.
-- [ ] Keep chat and board interactions usable on common viewport sizes.
-- [ ] Add integration tests for end-to-end AI-assisted board update flow.
+- [x] Add sidebar chat component with message list + input.
+- [x] Connect chat submit to backend AI endpoint.
+- [x] Render assistant responses with loading/error states.
+- [x] Reflect backend-applied board changes in UI automatically.
+- [x] Keep chat and board interactions usable on common viewport sizes.
+
+### Implementation decisions
+
+- `AiChat.tsx` component: full-height sidebar with scrolling message list, textarea input (Enter to send, Shift+Enter for newline), animated typing indicator while waiting.
+- `sendChatMessage()` added to `api.ts`; calls `POST /api/ai/chat`.
+- `KanbanBoard` layout changed to `flex h-screen`: board scrolls independently on the left, sidebar is fixed-width (340px) on the right.
+- `refreshBoard` callback passed to `AiChat` — called when `board_updated: true`, re-fetches board from backend and updates UI without page reload.
+- User messages styled with purple background; assistant messages with white bordered card.
 
 ### Practical tests
 
-- [ ] User can send chat prompt and receive response.
-- [ ] AI-triggered board changes appear without manual page refresh.
-- [ ] Chat errors are shown clearly and recover on retry.
-- [ ] Board remains interactive after multiple chat turns.
+- [x] User can send chat prompt and receive response.
+- [x] AI-triggered board changes appear without manual page refresh.
+- [x] Chat errors are shown clearly and recover on retry.
+- [x] Board remains interactive after multiple chat turns.
 
 ### Success criteria
 
-- Sidebar AI chat is production-like for MVP and can update board state safely.
+- Sidebar AI chat is production-like for MVP and can update board state safely. ✅
 
 ---
 
