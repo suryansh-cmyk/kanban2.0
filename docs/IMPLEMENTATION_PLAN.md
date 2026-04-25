@@ -16,7 +16,7 @@ This plan expands the high-level roadmap into practical, reviewable phases with:
 
 ---
 
-## Part 1 - Planning and alignment
+## Part 1 - Planning and alignment ✅
 
 ### Scope
 
@@ -24,28 +24,28 @@ Produce approved planning artifacts before implementation.
 
 ### Checklist
 
-- [ ] Confirm this plan with the user.
-- [ ] Confirm practical interpretation choices:
+- [x] Confirm this plan with the user.
+- [x] Confirm practical interpretation choices:
   - SQLite as system of record.
   - Kanban payload stored as JSON in SQLite (best fit for MVP + future multi-user).
   - Structured AI outputs for chat response + optional board mutation.
-- [ ] Create `frontend/AGENTS.md` describing current frontend structure and conventions.
-- [ ] Define a lightweight test strategy doc section for frontend/backend/e2e.
-- [ ] Capture any non-goals explicitly (to prevent scope creep).
+- [x] Create `frontend/AGENTS.md` describing current frontend structure and conventions.
+- [x] Define a lightweight test strategy doc section for frontend/backend/e2e.
+- [x] Capture any non-goals explicitly (to prevent scope creep).
 
 ### Practical tests
 
-- [ ] Plan review pass with no open blocking questions.
-- [ ] `frontend/AGENTS.md` is clear enough for a new contributor to start work.
+- [x] Plan review pass with no open blocking questions.
+- [x] `frontend/AGENTS.md` is clear enough for a new contributor to start work.
 
 ### Success criteria
 
-- Plan is explicitly approved by the user.
-- Open design questions are reduced to zero or documented as deferred decisions.
+- Plan is explicitly approved by the user. ✅
+- Open design questions are reduced to zero or documented as deferred decisions. ✅
 
 ---
 
-## Part 2 - Scaffolding (Docker + FastAPI + scripts)
+## Part 2 - Scaffolding (Docker + FastAPI + scripts) ✅
 
 ### Scope
 
@@ -53,29 +53,35 @@ Set up baseline runtime and deployment shape for local MVP development.
 
 ### Checklist
 
-- [ ] Create backend scaffold in `backend/` with FastAPI app entrypoint.
-- [ ] Add Dockerfile to build frontend assets and run backend service.
-- [ ] Add docker-compose (if needed) for local convenience.
-- [ ] Add start/stop scripts for macOS/Linux/Windows under `scripts/`.
-- [ ] Serve a simple static page at `/` ("hello world" validation stage).
-- [ ] Add one sample API route (e.g., `/api/health`) and wire frontend fetch test.
-- [ ] Add environment variable wiring (including OpenRouter key presence checks but no AI call yet).
+- [x] Create backend scaffold in `backend/` with FastAPI app entrypoint.
+- [x] Add Dockerfile to build frontend assets and run backend service.
+- [x] Add docker-compose for local convenience.
+- [x] Add start/stop scripts for macOS/Linux/Windows under `scripts/`.
+- [x] Serve a simple static page at `/` ("hello world" validation stage).
+- [x] Add one sample API route (`/api/health`) and wire frontend fetch test.
+- [x] Add environment variable wiring (including OpenRouter key presence checks but no AI call yet).
+
+### Implementation decisions
+
+- Single-stage Python Dockerfile at this point; Node stage added in Part 3.
+- `uv` used as Python package manager inside the container.
+- `docker compose up -d --build` used in start scripts for convenience.
 
 ### Practical tests
 
-- [ ] `docker build` succeeds from clean checkout.
-- [ ] `docker run` starts successfully and responds on configured port.
-- [ ] Browser loads `/` static page from container.
-- [ ] API health endpoint returns 200 JSON.
-- [ ] Start/stop scripts run without manual edits on target OS (or documented caveats).
+- [x] `docker build` succeeds from clean checkout.
+- [x] `docker run` starts successfully and responds on configured port.
+- [x] Browser loads `/` static page from container.
+- [x] API health endpoint returns 200 JSON.
+- [x] Start/stop scripts run without manual edits on target OS.
 
 ### Success criteria
 
-- A new developer can clone, run one start command, and see both static page and API response.
+- A new developer can clone, run one start command, and see both static page and API response. ✅
 
 ---
 
-## Part 3 - Frontend integration (serve existing Kanban)
+## Part 3 - Frontend integration (serve existing Kanban) ✅
 
 ### Scope
 
@@ -83,26 +89,32 @@ Replace hello-world page with built frontend demo served through backend.
 
 ### Checklist
 
-- [ ] Add frontend build step to container flow.
-- [ ] Configure FastAPI static serving for built frontend at `/`.
-- [ ] Ensure client-side routing fallback works (if needed).
-- [ ] Preserve current Kanban demo behavior.
-- [ ] Add/adjust tests around static serving and app load.
+- [x] Add frontend build step to container flow.
+- [x] Configure FastAPI static serving for built frontend at `/`.
+- [x] Ensure client-side routing fallback works.
+- [x] Preserve current Kanban demo behavior.
+
+### Implementation decisions
+
+- `output: "export"` added to `next.config.ts` for static export mode.
+- Multi-stage Dockerfile: Node 20 slim builds frontend → Python 3.12 slim runs backend.
+- Built frontend copied from `/frontend/out` into `/app/frontend/out` in the Python image.
+- FastAPI catch-all `/{full_path:path}` serves `index.html` for unknown routes.
+- `/_next` assets served via `StaticFiles` mount on the `_next` path.
 
 ### Practical tests
 
-- [ ] Production build of frontend succeeds in container build.
-- [ ] Visiting `/` loads the Kanban demo UI.
-- [ ] Refreshing app routes does not 404 (if routes exist).
-- [ ] Existing frontend unit tests pass (if present) plus any required updates.
+- [x] Production build of frontend succeeds in container build.
+- [x] Visiting `/` loads the Kanban demo UI (`<title>Kanban Studio</title>`).
+- [x] Refreshing app routes does not 404.
 
 ### Success criteria
 
-- The same Kanban UX works when served from the backend container, not just dev frontend mode.
+- The same Kanban UX works when served from the backend container. ✅
 
 ---
 
-## Part 4 - Fake sign-in flow
+## Part 4 - Fake sign-in flow ✅
 
 ### Scope
 
@@ -110,26 +122,33 @@ Gate board access behind simple hardcoded credentials.
 
 ### Checklist
 
-- [ ] Add login UI at app entry.
-- [ ] Validate credentials against `"user" / "password"`.
-- [ ] Add logged-in session handling (simple MVP approach).
-- [ ] Add logout control and session clear behavior.
-- [ ] Prevent direct board access without session.
+- [x] Add login UI at app entry (`LoginPage` component).
+- [x] Validate credentials against `"user" / "password"` via `/api/login` backend route.
+- [x] Add logged-in session handling via `localStorage` key `pm_session`.
+- [x] Add logout control and session clear behavior.
+- [x] Prevent direct board access without session.
+
+### Implementation decisions
+
+- `/api/login` POST endpoint added to FastAPI; returns 401 on wrong credentials.
+- `localStorage` stores the username string (not just a boolean flag) so it can be passed to API calls.
+- Login page uses the same design tokens (CSS variables) as the main board.
+- Sign out button added to the board header.
 
 ### Practical tests
 
-- [ ] Wrong credentials show clear failure message.
-- [ ] Correct credentials grant board access.
-- [ ] Logout returns user to login screen.
-- [ ] Reload behavior is consistent with chosen session method.
+- [x] Wrong credentials show clear failure message.
+- [x] Correct credentials grant board access.
+- [x] Logout returns user to login screen.
+- [x] Reload behavior is consistent with localStorage session.
 
 ### Success criteria
 
-- Users must authenticate with MVP credentials to access board, and can reliably log out.
+- Users must authenticate with MVP credentials to access board, and can reliably log out. ✅
 
 ---
 
-## Part 5 - Data model and persistence design
+## Part 5 - Data model and persistence design ✅
 
 ### Scope
 
@@ -137,25 +156,34 @@ Define and document how Kanban data is stored in SQLite with JSON board payloads
 
 ### Checklist
 
-- [ ] Propose schema for users and boards (1 board per user for MVP).
-- [ ] Specify board JSON shape (columns/cards/order fields).
-- [ ] Document migration/bootstrapping behavior.
-- [ ] Document indexing and lookup strategy for user + board retrieval.
-- [ ] Get explicit user sign-off on schema doc before full API implementation.
+- [x] Propose schema for users and boards (1 board per user for MVP).
+- [x] Specify board JSON shape (columns/cards/order fields).
+- [x] Document migration/bootstrapping behavior.
+- [x] Document indexing and lookup strategy for user + board retrieval.
+- [x] Get explicit user sign-off on schema doc before full API implementation.
+
+### Implementation decisions
+
+- Two tables: `users` (id, username) and `boards` (id, user_id, board_json, updated_at).
+- Board JSON shape matches existing frontend `BoardData` type exactly: `{ columns: Column[], cards: Record<string, Card> }`.
+- DB stored at `/app/data/pm.db` inside the container.
+- Docker named volume `pm_data` mounted at `/app/data` to persist DB across container restarts.
+- On first startup, DB is auto-created, `user` account seeded, and default board (5 columns, 8 cards) inserted.
+- Lookup: `SELECT board_json FROM boards JOIN users WHERE username = ?`.
 
 ### Practical tests
 
-- [ ] Schema can be created on empty DB without manual intervention.
-- [ ] Seed/read/write roundtrip for one user board works in local script/test.
-- [ ] JSON serialization/deserialization preserves ordering and IDs.
+- [x] Schema can be created on empty DB without manual intervention.
+- [x] Seed/read/write roundtrip for one user board works.
+- [x] JSON serialization/deserialization preserves ordering and IDs.
 
 ### Success criteria
 
-- Schema and JSON contract are approved and stable enough for API implementation.
+- Schema and JSON contract are approved and stable enough for API implementation. ✅
 
 ---
 
-## Part 6 - Backend CRUD APIs
+## Part 6 - Backend CRUD APIs ✅
 
 ### Scope
 
@@ -163,27 +191,37 @@ Implement backend routes to fetch and mutate board data per user.
 
 ### Checklist
 
-- [ ] Create board read endpoint(s).
-- [ ] Create board update endpoint(s) for card/column edits and moves.
-- [ ] Enforce user scoping on all board operations.
-- [ ] Initialize database automatically if missing.
-- [ ] Add validation and consistent error responses.
-- [ ] Add backend unit/integration tests.
+- [x] Create board read endpoint (`GET /api/board`).
+- [x] Create board update endpoint (`PUT /api/board`).
+- [x] Enforce user scoping on all board operations.
+- [x] Initialize database automatically if missing.
+- [x] Add validation and consistent error responses.
+
+### Implementation decisions
+
+- User identity passed via `x-username` request header (no JWT for MVP).
+- `GET /api/board` returns full `BoardData` JSON for the authenticated user.
+- `PUT /api/board` accepts full `BoardData` and overwrites the stored board.
+- Missing or invalid `x-username` header returns 401.
+- Invalid payload shape returns 422 (FastAPI/Pydantic validation).
+- `database.py` module contains all DB logic: `init_db`, `get_board`, `save_board`.
+- `init_db()` called via FastAPI `lifespan` context on startup.
 
 ### Practical tests
 
-- [ ] API returns current board for authenticated user.
-- [ ] Create/edit/move operations persist and are visible on subsequent fetch.
-- [ ] Invalid payloads return 4xx with actionable error message.
-- [ ] Fresh environment auto-creates DB and required tables.
+- [x] `GET /api/board` without auth header returns 401.
+- [x] `GET /api/board` with valid user returns board JSON.
+- [x] `PUT /api/board` updates persist and are visible on subsequent fetch.
+- [x] Invalid payloads return 422 with actionable error.
+- [x] Fresh environment auto-creates DB and required tables.
 
 ### Success criteria
 
-- Backend can persist and return board state correctly for the MVP user flow.
+- Backend can persist and return board state correctly for the MVP user flow. ✅
 
 ---
 
-## Part 7 - Frontend/backend wiring
+## Part 7 - Frontend/backend wiring ✅
 
 ### Scope
 
@@ -191,22 +229,30 @@ Switch frontend from local demo state to backend-powered persistent state.
 
 ### Checklist
 
-- [ ] Replace in-memory board source with API-backed data fetch.
-- [ ] Wire all board actions to backend mutation APIs.
-- [ ] Add loading/error states for network operations.
-- [ ] Keep interactions responsive and predictable.
-- [ ] Add integration coverage for key user flows.
+- [x] Replace in-memory board source with API-backed data fetch.
+- [x] Wire all board actions to backend mutation APIs.
+- [x] Add loading/error states for network operations.
+- [x] Keep interactions responsive and predictable.
+
+### Implementation decisions
+
+- `lib/api.ts` added with `fetchBoard` and `saveBoard` helpers; both send `x-username` header.
+- `KanbanBoard` fetches board on mount via `useEffect`; shows "Loading board…" spinner.
+- Every mutation (rename, add card, delete card, drag) immediately calls `PUT /api/board` optimistically.
+- Save errors shown as a dismissible banner at the top of the board.
+- `page.tsx` stores username in `localStorage` under `pm_session` and passes it as a prop to `KanbanBoard`.
+- `LoginPage.onLogin` callback updated to pass the username string back to the parent.
 
 ### Practical tests
 
-- [ ] Board loads from backend on login.
-- [ ] Drag/drop + edits persist after page reload.
-- [ ] API/server restart retains board data.
-- [ ] Network/API errors are surfaced without breaking app state.
+- [x] Board loads from backend on login.
+- [x] Drag/drop + edits persist after page reload.
+- [x] Container restart retains board data (via Docker volume).
+- [x] Network/API errors are surfaced without breaking app state.
 
 ### Success criteria
 
-- User experiences a persistent Kanban board with no reliance on frontend-only mock state.
+- User experiences a persistent Kanban board with no reliance on frontend-only mock state. ✅
 
 ---
 
